@@ -9,9 +9,6 @@
 # TTYD 免登录
 # sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 
-# 禁用默认的网口自动桥接逻辑（避免覆盖自定义配置）
-sed -i 's/ucidef_set_interface_lan/echo "Custom LAN config enabled, skip default bridge"/g' package/base-files/files/bin/config_generate
-sed -i 's/ucidef_set_interface_wan/echo "Custom WAN config enabled, skip default WAN"/g' package/base-files/files/bin/config_generate
 
 # 移除要替换的包
 rm -rf feeds/packages/net/mosdns
