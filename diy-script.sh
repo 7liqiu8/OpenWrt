@@ -9,6 +9,54 @@
 # TTYD 免登录
 # sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 
+# 固化WAN/LAN口分配：eth1=WAN，eth0+eth2桥接为LAN（i350t2单口WAN，i219+i350t2单口LAN）
+sed -i '/start_network() {/a\
+\techo "Configuring custom WAN/LAN ports..."\
+\t# 清除默认LAN/WAN配置，避免冲突\
+\tuci del network.lan 2>/dev/null\
+\tuci del network.wan 2>/dev/null\
+\tuci del network.wan6 2>/dev/null\
+\t# 配置LAN口：桥接eth0（i219）+eth2（i350t2网口2），默认IP192.168.12.1\
+\tuci set network.lan=interface\
+\tuci set network.lan.ifname="br-lan"\
+\tuci set network.lan.proto="static"\
+\tuci set network.lan.ipaddr="192.168.12.1"\
+\tuci set network.lan.netmask="255.255.255.0"\
+\tuci set network.lan.gateway="192.168.12.1"\
+\tuci set network.lan.dns="223.5.5.5 114.114.114.114"\
+\tuci set network.lan.type="bridge"\
+\tuci set network.lan.bridge_ports="eth0 eth2"\
+\t# 配置WAN口：eth1（i350t2网口1），DHCP模式（适配光猫/上级路由自动分配）\
+\tuci set network.wan=interface\
+\tuci set network.wan.ifname="eth1"\
+\tuci set network.wan.proto="dhcp"\
+\tuci set network.wan.peerdns="0"\
+\tuci set network.wan.dns="223.5.5.5 114.114.114.114"\
+\t# 配置WAN6口：适配IPv6，与WAN口绑定eth1\
+\tuci set network.wan6=interface\
+\tuci set network.wan6.ifname="eth1"\
+\tuci set network.wan6.proto="dhcpv6"\
+\tuci set network.wan6.reqprefix="auto"\
+\tuci set network.wan6.reqaddress="try"\
+\t# 保存网络配置\
+\tuci commit network' package/base-files/files/bin/config_generate
+
+
+# 固化网口命名：绑定MAC地址到eth0/eth1/eth2，彻底避免枚举顺序错乱
+mkdir -p package/base-files/files/etc/udev/rules.d
+cat > package/base-files/files/etc/udev/rules.d/70-persistent-net.rules << EOF
+# 板载i219网卡 → 永久绑定为eth0（LAN）
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="80:86:F2:99:18:7F", NAME="eth0"
+# PCIe i350t2 网口1 → 永久绑定为eth1（WAN）
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="00:E0:ED:58:04:0C", NAME="eth1"
+# PCIe i350t2 网口2 → 永久绑定为eth2（LAN）
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="00:E0:ED:58:04:0D", NAME="eth2"
+EOF
+
+# 禁用默认的网口自动桥接逻辑（避免覆盖自定义配置）
+sed -i 's/ucidef_set_interface_lan/echo "Custom LAN config enabled, skip default bridge"/g' package/base-files/files/bin/config_generate
+sed -i 's/ucidef_set_interface_wan/echo "Custom WAN config enabled, skip default WAN"/g' package/base-files/files/bin/config_generate
+
 # 移除要替换的包
 rm -rf feeds/packages/net/mosdns
 rm -rf feeds/packages/net/msd_lite
@@ -124,7 +172,7 @@ find package/luci-theme-*/* -type f -name '*luci-theme-*' -print -exec sed -i '/
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/controller/*.lua
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/model/cbi/v2ray_server/*.lua
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/view/v2ray_server/*.htm
-sed -i 's/192.168.1.1/192.168.12.1/g' package/base-files/files/bin/config_generate
+# sed -i 's/192.168.1.1/192.168.12.1/g' package/base-files/files/bin/config_generate
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
