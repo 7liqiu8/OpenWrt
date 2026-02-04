@@ -39,6 +39,8 @@ git clone --depth=1 https://github.com/Jason6111/luci-app-netdata package/luci-a
 git_sparse_clone main https://github.com/Lienol/openwrt-package luci-app-filebrowser luci-app-ssr-mudb-server
 git_sparse_clone openwrt-18.06 https://github.com/immortalwrt/luci applications/luci-app-eqos
 # git_sparse_clone master https://github.com/syb999/openwrt-19.07.1 package/network/services/msd_lite
+git clone --depth=1 https://github.com/OpenListTeam/OpenList package/luci-app-openlist
+
 
 # 科学上网插件
 git clone --depth=1 -b main https://github.com/fw876/helloworld package/luci-app-ssr-plus
@@ -75,11 +77,12 @@ git clone --depth=1 https://github.com/ximiTech/msd_lite package/msd_lite
 git clone --depth=1 https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
 
 # Alist
-git clone --depth=1 https://github.com/sbwml/luci-app-alist package/luci-app-alist
+# git clone --depth=1 https://github.com/sbwml/luci-app-alist package/luci-app-alist
 
 # DDNS.to
 git_sparse_clone main https://github.com/linkease/nas-packages-luci luci/luci-app-ddnsto
 git_sparse_clone master https://github.com/linkease/nas-packages network/services/ddnsto
+git clone --depth 1 https://github.com/gdy666/luci-app-lucky.git package/luci-app-lucky
 
 # iStore
 git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
@@ -121,6 +124,7 @@ find package/luci-theme-*/* -type f -name '*luci-theme-*' -print -exec sed -i '/
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/controller/*.lua
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/model/cbi/v2ray_server/*.lua
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/view/v2ray_server/*.htm
+sed -i 's/192.168.1.1/192.168.12.1/g' package/base-files/files/bin/config_generate
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
